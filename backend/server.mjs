@@ -9,20 +9,24 @@ dotenv.config();
 const app = express();
 
 
-const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173']
+const allowedOrigins = [
+  'https://frontend-ten-ashen-20.vercel.app',
+  'http://localhost:5173',
+  process.env.FRONTEND_URL
+]
   .filter(Boolean)
   .flatMap(url => url.split(','))
-  .map(url => url.trim())
+  .map(url => url.trim().replace(/\/+$/, ''))
   .filter(Boolean)
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow server-to-server requests and tools without an Origin header
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin.replace(/\/+$/, ''))) {
         return callback(null, true)
       }
 
+      console.log('Blocked CORS Origin:', origin)
       return callback(new Error('Not allowed by CORS'))
     },
     credentials: true,
@@ -30,6 +34,7 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization']
   })
 )
+
 
 app.use(express.json());
 
