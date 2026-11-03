@@ -1,14 +1,14 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import authRoutes from './routes/auth.mjs';
+import express from 'express'
+import mongoose from 'mongoose'
+import cors from 'cors'
+import dotenv from 'dotenv'
+import authRoutes from './routes/auth.mjs'
 
-dotenv.config();
+dotenv.config()
 
-const app = express();
+const app = express()
 
-
+// Allowed frontend origins
 const allowedOrigins = [
   'https://frontend-ten-ashen-20.vercel.app',
   'http://localhost:5173',
@@ -19,6 +19,7 @@ const allowedOrigins = [
   .map(url => url.trim().replace(/\/+$/, ''))
   .filter(Boolean)
 
+// CORS Configuration
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -35,25 +36,42 @@ app.use(
   })
 )
 
+app.use(express.json())
 
-app.use(express.json());
-
-// Routes
-app.use('/api/auth', authRoutes);
-
-// Health check
+// Health Check
 app.get('/', (req, res) => {
-  res.json({ message: 'MERN Auth API is running!' });
-});
+  res.status(200).json({
+    success: true,
+    message: 'MERN Auth API is running!',
+    database:
+      mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+  })
+})
+
+// Authentication Routes
+app.use('/api/auth', authRoutes)
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`
+  })
+})
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
+mongoose
+  .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB Connected');
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    console.log('MongoDB Connected')
+
+    const PORT = process.env.PORT || 5000
+
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`)
+    })
   })
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err.message);
-    process.exit(1);
-  });
+  .catch(error => {
+    console.error('MongoDB connection error:', error.message)
+    process.exit(1)
+  })
