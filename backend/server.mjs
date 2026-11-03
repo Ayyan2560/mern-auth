@@ -8,11 +8,30 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
-}));
+import cors from 'cors'
+
+const allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173']
+  .filter(Boolean)
+  .flatMap(url => url.split(','))
+  .map(url => url.trim())
+  .filter(Boolean)
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow server-to-server requests and tools without an Origin header
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true)
+      }
+
+      return callback(new Error('Not allowed by CORS'))
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  })
+)
+
 app.use(express.json());
 
 // Routes
